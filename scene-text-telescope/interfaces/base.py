@@ -181,10 +181,10 @@ class TextBase(object):
             if self.resume is not '':
                 self.logging.info('loading pre-trained model from %s ' % self.resume)
                 if self.config.TRAIN.ngpu == 1:
-                    model.load_state_dict(torch.load(self.resume)['state_dict_G'])
+                    model.load_state_dict(torch.load(self.resume, map_location=self.device)['state_dict_G'])
                 else:
                     model.load_state_dict(
-                        {'module.' + k: v for k, v in torch.load(self.resume)['state_dict_G'].items()})
+                        {'module.' + k: v for k, v in torch.load(self.resume, map_location=self.device)['state_dict_G'].items()})
 
         para_num = get_parameter_number(model)
         self.logging.info('Total Parameters {}'.format(para_num))
@@ -278,7 +278,7 @@ class TextBase(object):
                             inputDataType='torch.cuda.FloatTensor', CUDA=True)
         model_path = self.config.TRAIN.VAL.moran_pretrained
         self.logging.info('loading pre-trained moran model from %s' % model_path)
-        state_dict = torch.load(model_path)
+        state_dict = torch.load(model_path, map_location=self.device)
         MORAN_state_dict_rename = OrderedDict()
         for k, v in state_dict.items():
             name = k.replace("module.", "")  # remove `module.`
@@ -313,7 +313,7 @@ class TextBase(object):
         aster_info = AsterInfo(cfg.voc_type)
         model_path = self.config.TRAIN.VAL.crnn_pretrained
         self.logging.info('loading pretrained crnn model from %s' % model_path)
-        model.load_state_dict(torch.load(model_path))
+        model.load_state_dict(torch.load(model_path, map_location=self.device))
         return model, aster_info
 
     def parse_crnn_data(self, imgs_input):
@@ -330,7 +330,7 @@ class TextBase(object):
         aster = recognizer.RecognizerBuilder(arch='ResNet_ASTER', rec_num_classes=aster_info.rec_num_classes,
                                              sDim=512, attDim=512, max_len_labels=aster_info.max_len,
                                              eos=aster_info.char2id[aster_info.EOS], STN_ON=True)
-        aster.load_state_dict(torch.load(self.config.TRAIN.VAL.rec_pretrained)['state_dict'])
+        aster.load_state_dict(torch.load(self.config.TRAIN.VAL.rec_pretrained, map_location=self.device)['state_dict'])
         self.logging.info('load pred_trained aster model from %s' % self.config.TRAIN.VAL.rec_pretrained)
         aster = aster.to(self.device)
         aster = torch.nn.DataParallel(aster, device_ids=range(cfg.ngpu))

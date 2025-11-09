@@ -1,0 +1,3 @@
+scene_1.jpg	上海交通大学正门
+scene_2.jpg	Welcome to Starbucks
+scene_3.jpg	新华书店

@@ -1,0 +1,98 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# 虚拟环境
+.venv/
+.venv37/
+venv/
+env/
+ENV/
+
+# 模型权重文件（大文件）
+*.pth
+*.pt
+*.ckpt
+*.pkl
+*.h5
+*.hdf5
+*.pb
+*.onnx
+*.tflite
+
+# Checkpoint 目录（包含训练模型和日志）
+checkpoint/
+*.log
+
+# 数据集文件（LMDB 数据库）
+*.mdb
+*.lock
+
+# 排除数据集目录中的训练和测试数据
+dataset/mydata/train*/
+dataset/mydata/test*/
+
+# 排除模型权重和 pickle 文件
+dataset/mydata/*.pth
+dataset/mydata/*.pkl
+
+# 但保留 README 文件（必须在排除规则之后）
+!dataset/mydata/
+!dataset/mydata/README.md
+
+# Demo 结果
+demo_results/
+extracted_samples/
+
+# TensorBoard 日志
+events.out.tfevents.*
+*.tfevents.*
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# 临时文件
+*.tmp
+*.temp
+*.bak
+*.backup
+demo_temp/
+
+# 文档编译产物
+*.pdf
+!document/*.pdf
+
+# 大型图片文件（如果不需要提交）
+# *.jpg
+# *.png
+# *.jpeg
+# 取消注释上面的行来排除所有图片
+
+# 但保留小图片和示例图片
+!image/
+!samples/
+
+# 日志文件
+*.log
+logs/
+
+# 系统文件
+Thumbs.db
+.DS_Store
+

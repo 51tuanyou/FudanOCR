@@ -208,7 +208,8 @@ class TextSR(base.TextBase):
                 cnt += 1
 
             sum_images += val_batch_size
-            torch.cuda.empty_cache()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
         psnr_avg = sum(metric_dict['psnr']) / len(metric_dict['psnr'])
         ssim_avg = sum(metric_dict['ssim']) / len(metric_dict['ssim'])
         logging.info('[{}]\t'
@@ -363,8 +364,26 @@ class TextSR(base.TextBase):
         sum_images = 0
         time_begin = time.time()
         sr_time = 0
-        for im_name in tqdm(os.listdir(self.args.demo_dir)):
-            images_lr = transform_(os.path.join(self.args.demo_dir, im_name))
+        # 支持的图像格式
+        image_extensions = {'.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif', '.gif', '.webp'}
+        # 过滤出图像文件
+        image_files = [f for f in os.listdir(self.args.demo_dir) 
+                      if os.path.splitext(f.lower())[1] in image_extensions]
+        
+        # 创建结果保存目录
+        result_dir = os.path.join('checkpoint', self.args.exp_name, 'demo_results')
+        os.makedirs(result_dir, exist_ok=True)
+        logging.info(f'结果将保存到: {result_dir}')
+        
+        # 结果列表
+        results = []
+        
+        for im_name in tqdm(image_files):
+            try:
+                images_lr = transform_(os.path.join(self.args.demo_dir, im_name))
+            except Exception as e:
+                logging.warning(f'跳过文件 {im_name}: {e}')
+                continue
             images_lr = images_lr.to(self.device)
             sr_beigin = time.time()
             images_sr = model(images_lr)
@@ -412,12 +431,72 @@ class TextSR(base.TextBase):
                 preds_lr = preds_lr.transpose(1, 0).contiguous().view(-1)
                 preds_size = torch.IntTensor([crnn_output_lr.size(0)] * 1)
                 pred_str_lr = self.converter_crnn.decode(preds_lr.data, preds_size.data, raw=False)
-            logging.info('{} ===> {}'.format(pred_str_lr, pred_str_sr))
-            torch.cuda.empty_cache()
-        sum_images = len(os.listdir(self.args.demo_dir))
+            
+            # 保存结果
+            result_info = {
+                'image': im_name,
+                'lr_text': pred_str_lr,
+                'sr_text': pred_str_sr
+            }
+            results.append(result_info)
+            
+            # 保存超分辨率图像
+            try:
+                # 将张量转换为图像并保存
+                sr_image = images_sr[0, :3, :, :].detach().cpu()
+                sr_image = torch.clamp(sr_image, 0, 1)
+                save_path = os.path.join(result_dir, f'sr_{im_name}')
+                torchvision.utils.save_image(sr_image, save_path)
+                
+                # 也保存低分辨率图像用于对比
+                lr_image = images_lr[0, :3, :, :].detach().cpu()
+                lr_image = torch.clamp(lr_image, 0, 1)
+                lr_save_path = os.path.join(result_dir, f'lr_{im_name}')
+                torchvision.utils.save_image(lr_image, lr_save_path)
+            except Exception as e:
+                logging.warning(f'保存图像失败 {im_name}: {e}')
+            
+            # 输出识别结果
+            logging.info(f'{im_name}: LR识别="{pred_str_lr}" ===> SR识别="{pred_str_sr}"')
+            print(f'\n{im_name}:')
+            print(f'  低分辨率识别: {pred_str_lr}')
+            print(f'  超分辨率识别: {pred_str_sr}')
+            
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+        
+        sum_images = len(image_files)
         time_end = time.time()
         fps = sum_images / (time_end - time_begin)
-        logging.info('fps={}'.format(fps))
+        
+        # 保存结果摘要到文件
+        summary_path = os.path.join(result_dir, 'summary.txt')
+        with open(summary_path, 'w', encoding='utf-8') as f:
+            f.write('=' * 60 + '\n')
+            f.write('Demo 识别结果摘要\n')
+            f.write('=' * 60 + '\n\n')
+            f.write(f'处理图片数: {sum_images}\n')
+            f.write(f'处理速度: {fps:.2f} fps\n')
+            f.write(f'总耗时: {time_end - time_begin:.2f} 秒\n\n')
+            f.write('-' * 60 + '\n')
+            f.write('详细结果:\n')
+            f.write('-' * 60 + '\n\n')
+            for r in results:
+                f.write(f"图片: {r['image']}\n")
+                f.write(f"  低分辨率识别: {r['lr_text']}\n")
+                f.write(f"  超分辨率识别: {r['sr_text']}\n")
+                f.write('\n')
+        
+        logging.info(f'fps={fps:.2f}')
+        logging.info(f'结果已保存到: {result_dir}')
+        logging.info(f'结果摘要已保存到: {summary_path}')
+        print(f'\n' + '=' * 60)
+        print(f'处理完成！')
+        print(f'处理图片数: {sum_images}')
+        print(f'处理速度: {fps:.2f} fps')
+        print(f'结果保存目录: {result_dir}')
+        print(f'结果摘要文件: {summary_path}')
+        print('=' * 60)
 
 
 if __name__ == '__main__':

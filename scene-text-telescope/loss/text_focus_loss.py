@@ -9,6 +9,9 @@ import torch.nn as nn
 import torch.optim as optim
 from loss.transformer import Transformer
 
+# 自动检测设备（支持 CPU 和 GPU）
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 # ce_loss = torch.nn.CrossEntropyLoss()
 from loss.weight_ce_loss import weight_cross_entropy
 
@@ -53,9 +56,9 @@ class TextFocusLoss(nn.Module):
 
     def build_up_transformer(self):
 
-        transformer = Transformer().cuda()
+        transformer = Transformer().to(device)
         transformer = nn.DataParallel(transformer)
-        transformer.load_state_dict(torch.load('./dataset/mydata/pretrain_transformer.pth'))
+        transformer.load_state_dict(torch.load('./dataset/mydata/pretrain_transformer.pth', map_location=device))
         transformer.eval()
         self.transformer = transformer
 
@@ -63,7 +66,7 @@ class TextFocusLoss(nn.Module):
         batch = len(label)
 
         length = [len(i) for i in label]
-        length_tensor = torch.Tensor(length).long().cuda()
+        length_tensor = torch.Tensor(length).long().to(device)
 
         max_length = max(length)
         input_tensor = np.zeros((batch, max_length))
@@ -75,9 +78,9 @@ class TextFocusLoss(nn.Module):
         for i in label:
             for j in i:
                 text_gt.append(self.english_dict[j])
-        text_gt = torch.Tensor(text_gt).long().cuda()
+        text_gt = torch.Tensor(text_gt).long().to(device)
 
-        input_tensor = torch.from_numpy(input_tensor).long().cuda()
+        input_tensor = torch.from_numpy(input_tensor).long().to(device)
         return length_tensor, input_tensor, text_gt
 
 

@@ -39,6 +39,8 @@ Please remember to modify the experiment name. Two text-focused modules are acti
 CUDA_VISIBLE_DEVICES=GPU_NUM python main.py --batch_size=16 --STN --exp_name EXP_NAME --text_focus
 ```
 
+**详细训练指南**: 查看 [TRAINING_GUIDE.md](./TRAINING_GUIDE.md) 获取完整的训练使用示例和说明。
+
 ## Testing
 ```python
 CUDA_VISIBLE_DEVICES=GPU_NUM python main.py --batch_size=16 --STN --exp_name EXP_NAME --text_focus --resume YOUR_MODEL --test --test_data_dir ./dataset/mydata/test

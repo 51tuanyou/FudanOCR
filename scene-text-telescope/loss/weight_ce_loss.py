@@ -2,6 +2,9 @@ import torch
 import numpy as np
 import pickle as pkl
 
+# 自动检测设备（支持 CPU 和 GPU）
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 standard_alphebet = '-0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
 standard_dict = {}
 for index in range(len(standard_alphebet)):
@@ -20,7 +23,7 @@ def load_confuse_matrix():
     rearrange_data = np.concatenate((pad, rearrange_data), axis=1)
     rearrange_data = 1 / rearrange_data
     rearrange_data[rearrange_data==np.inf] = 1
-    rearrange_data = torch.Tensor(rearrange_data).cuda()
+    rearrange_data = torch.Tensor(rearrange_data).to(device)
 
     lower_alpha = 'abcdefghijklmnopqrstuvwxyz'
     # upper_alpha = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'

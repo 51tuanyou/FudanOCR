@@ -5,6 +5,9 @@ import math, copy
 import numpy as np
 from torch.autograd import Variable
 
+# 自动检测设备（支持 CPU 和 GPU）
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 alphabet = '-0123456789abcdefghijklmnopqrstuvwxyz'
 
 def get_alphabet_len():
@@ -289,7 +292,7 @@ class Decoder(nn.Module):
 
     def forward(self, text, conv_feature, attention_map=None):
         text_max_length = text.shape[1]
-        mask = subsequent_mask(text_max_length).cuda()
+        mask = subsequent_mask(text_max_length).to(text.device)
 
         result = text
         result = self.mul_layernorm1(result + self.mask_multihead(result, result, result, mask=mask)[0])
@@ -366,7 +369,7 @@ class Transformer(nn.Module):
 
         conv_feature = self.encoder(image) # batch, 1024, 8, 32
         text_embedding = self.embedding_word(text_input) # batch, text_max_length, 512
-        postion_embedding = self.pe(torch.zeros(text_embedding.shape).cuda()).cuda() # batch, text_max_length, 512
+        postion_embedding = self.pe(torch.zeros(text_embedding.shape, device=text_embedding.device)) # batch, text_max_length, 512
         text_input_with_pe = torch.cat([text_embedding, postion_embedding], 2) # batch, text_max_length, 1024
         batch, seq_len, _ = text_input_with_pe.shape
 

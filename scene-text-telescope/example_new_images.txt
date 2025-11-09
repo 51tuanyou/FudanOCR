@@ -1,0 +1,20 @@
+# 新训练数据示例文件
+# 格式: 图片路径 标签文本
+# 每行一个样本，图片路径和标签用空格分隔
+# 如果标签包含空格，需要用引号括起来
+
+# 示例1: 简单英文单词
+./new_images/sample1.jpg HELLO
+
+# 示例2: 数字
+./new_images/sample2.jpg 2024
+
+# 示例3: 包含空格的标签（用引号）
+./new_images/sample3.jpg "NEW YORK"
+
+# 示例4: 混合字符
+./new_images/sample4.jpg ABC123
+
+# 示例5: 短文本
+./new_images/sample5.jpg TEST
+
